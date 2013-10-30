@@ -59,7 +59,7 @@ func NewMySQLStore(endpoint string, tableName string, path string, maxAge int, k
 		return nil, err
 	}
 	defer db.Close()
-	cTableQ := "CREATE TABLE IF NOT EXISTS " + tableName + " (id INT NOT NULL AUTO_INCREMENT, session_data LONGBLOB, created_on TIMESTAMP DEFAULT 0, modified_on TIMESTAMP NOT NULL ON UPDATE CURRENT_TIMESTAMP, expires_on TIMESTAMP DEFAULT 0, PRIMARY KEY(`id`))"
+	cTableQ := "CREATE TABLE IF NOT EXISTS " + tableName + " (id INT NOT NULL AUTO_INCREMENT, session_data LONGBLOB, created_on TIMESTAMP DEFAULT 0, modified_on TIMESTAMP NOT NULL ON UPDATE CURRENT_TIMESTAMP, expires_on TIMESTAMP DEFAULT 0, PRIMARY KEY(`id`)) ENGINE=InnoDB"
 	if _, err = db.Query(cTableQ); err != nil {
 		return nil, err
 	}
