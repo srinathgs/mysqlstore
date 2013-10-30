@@ -3,6 +3,14 @@ mysqlstore
 
 Gorilla's Session Store Implementation for MySQL
 
+Installation
+===========
+
+Run `go get github.com/srinathgs/mysqlstore` from command line. Gets installed in `$GOPATH`
+
+Usage
+=====
+
 `NewMysqlStore` takes the following paramaters
 
     endpoint - A sql.Open style endpoint
