@@ -20,7 +20,10 @@ Usage
     codecs
 
 Internally, `mysqlstore` uses [this](https://github.com/go-sql-driver/mysql) MySQL driver.
+
 e.g.,
+      
+
       package main
   
       import (
