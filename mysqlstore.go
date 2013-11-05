@@ -1,6 +1,6 @@
 /* Gorilla Sessions backend for MySQL.
 
-Copyright (c) 2013 Contributors. See the list of contributors for details.
+Copyright (c) 2013 Contributors. See the list of contributors in the CONTRIBUTORS file for details.
 
 This software is licensed under a MIT style license available in the LICENSE file.
 */
