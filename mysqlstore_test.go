@@ -7,69 +7,12 @@
 package mysqlstore
 
 import (
-	"bytes"
 	"encoding/gob"
 	"github.com/gorilla/sessions"
 	"net/http"
-	//"net/http/httptest" // TODO: I think we can use this instead of sticking it in here...
+	"net/http/httptest"
 	"testing"
 )
-
-// ----------------------------------------------------------------------------
-// ResponseRecorder
-// ----------------------------------------------------------------------------
-// Copyright 2009 The Go Authors. All rights reserved.
-// Use of this source code is governed by a BSD-style
-// license that can be found in the LICENSE file.
-
-// ResponseRecorder is an implementation of http.ResponseWriter that
-// records its mutations for later inspection in tests.
-type ResponseRecorder struct {
-	Code      int           // the HTTP response code from WriteHeader
-	HeaderMap http.Header   // the HTTP response headers
-	Body      *bytes.Buffer // if non-nil, the bytes.Buffer to append written data to
-	Flushed   bool
-}
-
-// NewRecorder returns an initialized ResponseRecorder.
-func NewRecorder() *ResponseRecorder {
-	return &ResponseRecorder{
-		HeaderMap: make(http.Header),
-		Body:      new(bytes.Buffer),
-	}
-}
-
-// DefaultRemoteAddr is the default remote address to return in RemoteAddr if
-// an explicit DefaultRemoteAddr isn't set on ResponseRecorder.
-const DefaultRemoteAddr = "1.2.3.4"
-
-// Header returns the response headers.
-func (rw *ResponseRecorder) Header() http.Header {
-	return rw.HeaderMap
-}
-
-// Write always succeeds and writes to rw.Body, if not nil.
-func (rw *ResponseRecorder) Write(buf []byte) (int, error) {
-	if rw.Body != nil {
-		rw.Body.Write(buf)
-	}
-	if rw.Code == 0 {
-		rw.Code = http.StatusOK
-	}
-	return len(buf), nil
-}
-
-// WriteHeader sets rw.Code.
-func (rw *ResponseRecorder) WriteHeader(code int) {
-	rw.Code = code
-}
-
-// Flush sets rw.Flushed to true.
-func (rw *ResponseRecorder) Flush() {
-	rw.Flushed = true
-}
-
-// ----------------------------------------------------------------------------
 
 type FlashMessage struct {
 	Type    int
@@ -78,7 +21,7 @@ type FlashMessage struct {
 
 func TestMySQLStore(t *testing.T) {
 	var req *http.Request
-	var rsp *ResponseRecorder
+	var rsp *httptest.ResponseRecorder
 	var hdr http.Header
 	var err error
 	var ok bool
@@ -92,7 +35,6 @@ func TestMySQLStore(t *testing.T) {
 
 	// Round 1 ----------------------------------------------------------------
 
-	// RedisStore
 	store, err := NewMySQLStore("testuser:testpw@tcp(localhost:3306)/testdb?parseTime=true&loc=Local",
 		"sessionstore", "/", 3600, []byte("secret-key"))
 	if err != nil {
@@ -101,7 +43,7 @@ func TestMySQLStore(t *testing.T) {
 	defer store.Close()
 
 	req, _ = http.NewRequest("GET", "http://localhost:8080/", nil)
-	rsp = NewRecorder()
+	rsp = httptest.NewRecorder()
 	// Get a session.
 	if session, err = store.Get(req, "session-key"); err != nil {
 		t.Fatalf("Error getting session: %v", err)
@@ -130,7 +72,7 @@ func TestMySQLStore(t *testing.T) {
 
 	req, _ = http.NewRequest("GET", "http://localhost:8080/", nil)
 	req.Header.Add("Cookie", cookies[0])
-	rsp = NewRecorder()
+	rsp = httptest.NewRecorder()
 	// Get a session.
 	if session, err = store.Get(req, "session-key"); err != nil {
 		t.Fatalf("Error getting session: %v", err)
@@ -159,19 +101,16 @@ func TestMySQLStore(t *testing.T) {
 		t.Errorf("Expected dumped flashes; Got %v", flashes)
 	}
 
-	// RediStore specific
-	// Set MaxAge to -1 to mark for deletion.
-	session.Options.MaxAge = -1
-	// Save.
-	if err = sessions.Save(req, rsp); err != nil {
-		t.Fatalf("Error saving session: %v", err)
+	// Delete session.
+	if err = store.Delete(req, rsp, session); err != nil {
+		t.Fatalf("Error deleting session: %v", err)
 	}
 
 	// Round 3 ----------------------------------------------------------------
 	// Custom type
 
 	req, _ = http.NewRequest("GET", "http://localhost:8080/", nil)
-	rsp = NewRecorder()
+	rsp = httptest.NewRecorder()
 	// Get a session.
 	if session, err = store.Get(req, "session-key"); err != nil {
 		t.Fatalf("Error getting session: %v", err)
@@ -198,7 +137,7 @@ func TestMySQLStore(t *testing.T) {
 
 	req, _ = http.NewRequest("GET", "http://localhost:8080/", nil)
 	req.Header.Add("Cookie", cookies[0])
-	rsp = NewRecorder()
+	rsp = httptest.NewRecorder()
 	// Get a session.
 	if session, err = store.Get(req, "session-key"); err != nil {
 		t.Fatalf("Error getting session: %v", err)
@@ -213,12 +152,9 @@ func TestMySQLStore(t *testing.T) {
 		t.Errorf("Expected %#v, got %#v", FlashMessage{42, "foo"}, custom)
 	}
 
-	// Set MaxAge to -1 to mark for deletion.
-	session.Options.MaxAge = -1
-	// TODO: delete from database upon marking -1.
-	// Save.
-	if err = sessions.Save(req, rsp); err != nil {
-		t.Fatalf("Error saving session: %v", err)
+	// Delete session.
+	if err = store.Delete(req, rsp, session); err != nil {
+		t.Fatalf("Error deleting session: %v", err)
 	}
 
 	// Round 5 ----------------------------------------------------------------
@@ -226,7 +162,7 @@ func TestMySQLStore(t *testing.T) {
 
 	req, _ = http.NewRequest("GET", "http://localhost:8080/", nil)
 	req.Header.Add("Cookie", cookies[0])
-	rsp = NewRecorder()
+	rsp = httptest.NewRecorder()
 	// Get a session.
 	if session, err = store.Get(req, "session-key"); err != nil {
 		t.Fatalf("Error getting session: %v", err)

@@ -75,7 +75,7 @@ func NewMySQLStore(endpoint string, tableName string, path string, maxAge int, k
 		"session_data LONGBLOB, " +
 		"created_on TIMESTAMP DEFAULT 0, " +
 		"modified_on TIMESTAMP NOT NULL ON UPDATE CURRENT_TIMESTAMP, " +
-		"expires_on DATETIME DEFAULT 0, PRIMARY KEY(`id`)) ENGINE=InnoDB;"
+		"expires_on TIMESTAMP DEFAULT 0, PRIMARY KEY(`id`)) ENGINE=InnoDB;"
 	if _, err = db.Exec(cTableQ); err != nil {
 		return nil, err
 	}
@@ -145,6 +145,8 @@ func (m *MySQLStore) New(r *http.Request, name string) (*sessions.Session, error
 			err = m.load(session)
 			if err == nil {
 				session.IsNew = false
+			} else {
+				err = nil
 			}
 		}
 	}
@@ -174,14 +176,14 @@ func (m *MySQLStore) insert(session *sessions.Session) error {
 	var expiresOn time.Time
 	crOn := session.Values["created_on"]
 	if crOn == nil {
-		createdOn = time.Now().UTC()
+		createdOn = time.Now()
 	} else {
 		createdOn = crOn.(time.Time)
 	}
 	modifiedOn = createdOn
 	exOn := session.Values["expires_on"]
 	if exOn == nil {
-		expiresOn = time.Now().UTC().Add(time.Second * time.Duration(session.Options.MaxAge))
+		expiresOn = time.Now().Add(time.Second * time.Duration(session.Options.MaxAge))
 	} else {
 		expiresOn = exOn.(time.Time)
 	}
@@ -231,19 +233,19 @@ func (m *MySQLStore) save(session *sessions.Session) error {
 	var expiresOn time.Time
 	crOn := session.Values["created_on"]
 	if crOn == nil {
-		createdOn = time.Now().UTC()
+		createdOn = time.Now()
 	} else {
 		createdOn = crOn.(time.Time)
 	}
 
 	exOn := session.Values["expires_on"]
 	if exOn == nil {
-		expiresOn = time.Now().UTC().Add(time.Second * time.Duration(session.Options.MaxAge))
+		expiresOn = time.Now().Add(time.Second * time.Duration(session.Options.MaxAge))
 		log.Print("nil")
 	} else {
 		expiresOn = exOn.(time.Time)
-		if expiresOn.Sub(time.Now().UTC().Add(time.Second*time.Duration(session.Options.MaxAge))) < 0 {
-			expiresOn = time.Now().UTC().Add(time.Second * time.Duration(session.Options.MaxAge))
+		if expiresOn.Sub(time.Now().Add(time.Second*time.Duration(session.Options.MaxAge))) < 0 {
+			expiresOn = time.Now().Add(time.Second * time.Duration(session.Options.MaxAge))
 		}
 	}
 
@@ -268,8 +270,8 @@ func (m *MySQLStore) load(session *sessions.Session) error {
 	if scanErr != nil {
 		return scanErr
 	}
-	if sess.expiresOn.Sub(time.Now().UTC()) < 0 {
-		log.Printf("Session expired on %s, but it is %s now.", sess.expiresOn, time.Now().UTC())
+	if sess.expiresOn.Sub(time.Now()) < 0 {
+		log.Printf("Session expired on %s, but it is %s now.", sess.expiresOn, time.Now())
 		return errors.New("Session expired")
 	}
 	err := securecookie.DecodeMulti(session.Name(), sess.data, &session.Values, m.Codecs...)
