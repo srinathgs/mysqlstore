@@ -119,7 +119,10 @@ func (m *MySQLStore) Get(r *http.Request, name string) (*sessions.Session, error
 
 func (m *MySQLStore) New(r *http.Request, name string) (*sessions.Session, error) {
 	session := sessions.NewSession(m, name)
-	session.Options = &(*m.Options)
+	session.Options = &sessions.Options{
+		Path:   m.Options.Path,
+		MaxAge: m.Options.MaxAge,
+	}
 	session.IsNew = true
 	var err error
 	if cook, errCookie := r.Cookie(name); errCookie == nil {
