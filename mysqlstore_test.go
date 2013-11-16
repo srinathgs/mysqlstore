@@ -101,9 +101,10 @@ func TestMySQLStore(t *testing.T) {
 		t.Errorf("Expected dumped flashes; Got %v", flashes)
 	}
 
-	// Delete session.
-	if err = store.Delete(req, rsp, session); err != nil {
-		t.Fatalf("Error deleting session: %v", err)
+	session.Options.MaxAge = -1
+	// Save.
+	if err = sessions.Save(req, rsp); err != nil {
+		t.Fatalf("Error saving session: %v", err)
 	}
 
 	// Round 3 ----------------------------------------------------------------
@@ -153,8 +154,10 @@ func TestMySQLStore(t *testing.T) {
 	}
 
 	// Delete session.
-	if err = store.Delete(req, rsp, session); err != nil {
-		t.Fatalf("Error deleting session: %v", err)
+	session.Options.MaxAge = -1
+	// Save.
+	if err = sessions.Save(req, rsp); err != nil {
+		t.Fatalf("Error saving session: %v", err)
 	}
 
 	// Round 5 ----------------------------------------------------------------
@@ -167,10 +170,11 @@ func TestMySQLStore(t *testing.T) {
 	if session, err = store.Get(req, "session-key"); err != nil {
 		t.Fatalf("Error getting session: %v", err)
 	}
-	// Delete session.
+
 	if err = store.Delete(req, rsp, session); err != nil {
 		t.Fatalf("Error deleting session: %v", err)
 	}
+
 	// Get a flash.
 	flashes = session.Flashes()
 	if len(flashes) != 0 {
