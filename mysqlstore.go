@@ -50,6 +50,10 @@ func NewMySQLStore(endpoint string, tableName string, path string, maxAge int, k
 		return nil, err
 	}
 
+	return NewMySQLStoreFromConnection(db, tableName, path, maxAge, keyPairs...)
+}
+
+func NewMySQLStoreFromConnection(db *sql.DB, tableName string, path string, maxAge int, keyPairs ...[]byte) (*MySQLStore, error) {
 	// Make sure table name is enclosed.
 	tableName = "`" + strings.Trim(tableName, "`") + "`"
 
