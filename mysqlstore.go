@@ -63,7 +63,7 @@ func NewMySQLStoreFromConnection(db *sql.DB, tableName string, path string, maxA
 		"created_on TIMESTAMP DEFAULT 0, " +
 		"modified_on TIMESTAMP NOT NULL ON UPDATE CURRENT_TIMESTAMP, " +
 		"expires_on TIMESTAMP DEFAULT 0, PRIMARY KEY(`id`)) ENGINE=InnoDB;"
-	if _, err = db.Exec(cTableQ); err != nil {
+	if _, err := db.Exec(cTableQ); err != nil {
 		return nil, err
 	}
 
