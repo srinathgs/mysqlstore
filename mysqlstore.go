@@ -54,17 +54,25 @@ func NewMySQLStore(endpoint string, tableName string, path string, maxAge int, k
 }
 
 func NewMySQLStoreFromConnection(db *sql.DB, tableName string, path string, maxAge int, keyPairs ...[]byte) (*MySQLStore, error) {
+	tableNameOrig := tableName
 	// Make sure table name is enclosed.
 	tableName = "`" + strings.Trim(tableName, "`") + "`"
 
-	cTableQ := "CREATE TABLE IF NOT EXISTS " +
-		tableName + " (id INT NOT NULL AUTO_INCREMENT, " +
-		"session_data LONGBLOB, " +
-		"created_on TIMESTAMP DEFAULT 0, " +
-		"modified_on TIMESTAMP NOT NULL ON UPDATE CURRENT_TIMESTAMP, " +
-		"expires_on TIMESTAMP DEFAULT 0, PRIMARY KEY(`id`)) ENGINE=InnoDB;"
-	if _, err := db.Exec(cTableQ); err != nil {
+	var count int
+	err := db.QueryRow("SELECT COUNT(1) as count FROM information_schema.tables WHERE table_name = ?", tableNameOrig).Scan(&count)
+	if err != nil {
 		return nil, err
+	}
+	if count == 0 {
+		cTableQ := "CREATE TABLE IF NOT EXISTS " +
+			tableName + " (id INT NOT NULL AUTO_INCREMENT, " +
+			"session_data LONGBLOB, " +
+			"created_on TIMESTAMP DEFAULT 0, " +
+			"modified_on TIMESTAMP NOT NULL ON UPDATE CURRENT_TIMESTAMP, " +
+			"expires_on TIMESTAMP DEFAULT 0, PRIMARY KEY(`id`)) ENGINE=InnoDB;"
+		if _, err := db.Exec(cTableQ); err != nil {
+			return nil, err
+		}
 	}
 
 	insQ := "INSERT INTO " + tableName +
