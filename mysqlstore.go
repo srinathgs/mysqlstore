@@ -11,7 +11,7 @@ import (
 	"encoding/gob"
 	"errors"
 	"fmt"
-	_ "github.com/go-sql-driver/mysql"
+	"github.com/go-sql-driver/mysql"
 	"github.com/gorilla/securecookie"
 	"github.com/gorilla/sessions"
 	"log"
@@ -64,7 +64,17 @@ func NewMySQLStoreFromConnection(db *sql.DB, tableName string, path string, maxA
 		"modified_on TIMESTAMP NOT NULL ON UPDATE CURRENT_TIMESTAMP, " +
 		"expires_on TIMESTAMP DEFAULT 0, PRIMARY KEY(`id`)) ENGINE=InnoDB;"
 	if _, err := db.Exec(cTableQ); err != nil {
-		return nil, err
+		switch err.(type) {
+		case *mysql.MySQLError:
+			// Error 1142 means permission denied for create command
+			if err.(*mysql.MySQLError).Number == 1142 {
+				break
+			} else {
+				return nil, err
+			}
+		default:
+			return nil, err
+		}
 	}
 
 	insQ := "INSERT INTO " + tableName +
