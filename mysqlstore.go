@@ -60,9 +60,9 @@ func NewMySQLStoreFromConnection(db *sql.DB, tableName string, path string, maxA
 	cTableQ := "CREATE TABLE IF NOT EXISTS " +
 		tableName + " (id INT NOT NULL AUTO_INCREMENT, " +
 		"session_data LONGBLOB, " +
-		"created_on TIMESTAMP DEFAULT 0, " +
-		"modified_on TIMESTAMP NOT NULL ON UPDATE CURRENT_TIMESTAMP, " +
-		"expires_on TIMESTAMP DEFAULT 0, PRIMARY KEY(`id`)) ENGINE=InnoDB;"
+		"created_on TIMESTAMP DEFAULT NOW(), " +
+		"modified_on TIMESTAMP NOT NULL DEFAULT NOW() ON UPDATE CURRENT_TIMESTAMP, " +
+		"expires_on TIMESTAMP DEFAULT NOW(), PRIMARY KEY(`id`)) ENGINE=InnoDB;"
 	if _, err := db.Exec(cTableQ); err != nil {
 		switch err.(type) {
 		case *mysql.MySQLError:
