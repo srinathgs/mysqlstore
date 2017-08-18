@@ -32,8 +32,7 @@ e.g.,
   	    "net/http"
       )
   
-      var store, _ = mysqlstore.NewMySQLStore("UN:PASS@tcp(<IP>:<PORT>)/<DB>?parseTime=true&loc=Local", <tablename>, "/", 3600, []byte("<SecretKey>"))
-      defer store.Close()
+      var store *mysqlstore.MySQLStore
   
       func sessTest(w http.ResponseWriter, r *http.Request) {
   	    session, err := store.Get(r, "foobar")
@@ -45,6 +44,12 @@ e.g.,
       }
 
     func main() {
+        store, err := mysqlstore.NewMySQLStore("UN:PASS@tcp(<IP>:<PORT>)/<DB>?parseTime=true&loc=Local", <tablename>, "/", 3600, []byte("<SecretKey>"))
+        if err != nil {
+          panic(err)
+        }
+        defer store.Close()
+
     	http.HandleFunc("/", sessTest)
     	http.ListenAndServe(":8080", nil)
     }
