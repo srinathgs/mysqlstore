@@ -45,7 +45,7 @@ func (m *MySQLStore) cleanup(interval time.Duration, quit <-chan struct{}, done 
 			// Delete expired sessions on each tick.
 			err := m.deleteExpired()
 			if err != nil {
-				log.Printf("pgstore: unable to delete expired sessions: %v", err)
+				log.Printf("mysqlstore: unable to delete expired sessions: %v", err)
 			}
 		}
 	}
@@ -53,7 +53,7 @@ func (m *MySQLStore) cleanup(interval time.Duration, quit <-chan struct{}, done 
 
 // deleteExpired deletes expired sessions from the database.
 func (m *MySQLStore) deleteExpired() error {
-	var deleteStmt = "DELETE FROM " + m.table + " WHERE expires_on < datetime('now')"
+	var deleteStmt = "DELETE FROM " + m.table + " WHERE expires_on < NOW()"
 	_, err := m.db.Exec(deleteStmt)
 	return err
 }
