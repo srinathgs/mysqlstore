@@ -11,13 +11,14 @@ import (
 	"encoding/gob"
 	"errors"
 	"fmt"
-	"github.com/go-sql-driver/mysql"
-	"github.com/gorilla/securecookie"
-	"github.com/gorilla/sessions"
 	"log"
 	"net/http"
 	"strings"
 	"time"
+
+	"github.com/go-sql-driver/mysql"
+	"github.com/gorilla/securecookie"
+	"github.com/gorilla/sessions"
 )
 
 type MySQLStore struct {
@@ -190,11 +191,8 @@ func (m *MySQLStore) insert(session *sessions.Session) error {
 	} else {
 		expiresOn = exOn.(time.Time)
 	}
-	delete(session.Values, "created_on")
-	delete(session.Values, "expires_on")
-	delete(session.Values, "modified_on")
 
-	encoded, encErr := securecookie.EncodeMulti(session.Name(), session.Values, m.Codecs...)
+	encoded, encErr := securecookie.EncodeMulti(session.Name(), filterValues(session.Values), m.Codecs...)
 	if encErr != nil {
 		return encErr
 	}
@@ -228,6 +226,18 @@ func (m *MySQLStore) Delete(r *http.Request, w http.ResponseWriter, session *ses
 	return nil
 }
 
+func filterValues(values map[interface{}]interface{}) map[interface{}]interface{} {
+	var filteredValues = make(map[interface{}]interface{})
+	for k, v := range values {
+		filteredValues[k] = v
+	}
+
+	delete(filteredValues, "created_on")
+	delete(filteredValues, "expires_on")
+	delete(filteredValues, "modified_on")
+	return filteredValues
+}
+
 func (m *MySQLStore) save(session *sessions.Session) error {
 	if session.IsNew == true {
 		return m.insert(session)
@@ -252,10 +262,7 @@ func (m *MySQLStore) save(session *sessions.Session) error {
 		}
 	}
 
-	delete(session.Values, "created_on")
-	delete(session.Values, "expires_on")
-	delete(session.Values, "modified_on")
-	encoded, encErr := securecookie.EncodeMulti(session.Name(), session.Values, m.Codecs...)
+	encoded, encErr := securecookie.EncodeMulti(session.Name(), filterValues(session.Values), m.Codecs...)
 	if encErr != nil {
 		return encErr
 	}
