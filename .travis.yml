@@ -1,0 +1,15 @@
+language: go
+
+go:
+  - master
+  - 1.12
+  - 1.11.5
+
+services:
+  - mysql
+
+before_install:
+  - mysql -e 'CREATE DATABASE testdb;'
+
+script:
+  - go test -v ./... -dsn "travis@tcp(localhost:3306)/testdb"
