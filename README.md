@@ -5,14 +5,14 @@ mysqlstore
 
 [![Build Status](https://travis-ci.org/zekroTJA/mysqlstore.svg?branch=master)](https://travis-ci.org/zekroTJA/mysqlstore)
 
-Gorilla's Session Store Implementation for MySQL
+Gorilla's Session Store Implementation for MySQL.
+
+*Fixed version which is working with the current versions of Go.*
 
 Installation
 ===========
 
 Run `go get github.com/srinathgs/mysqlstore` from command line. Gets installed in `$GOPATH`.
-
-*Fixed version which is working with the current versions of Go.*
 
 Usage
 =====
