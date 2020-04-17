@@ -8,22 +8,16 @@ package mysqlstore
 
 import (
 	"database/sql"
-	"database/sql/driver"
 	"encoding/gob"
 	"errors"
 	"fmt"
+	"github.com/go-sql-driver/mysql"
+	"github.com/gorilla/securecookie"
+	"github.com/gorilla/sessions"
 	"log"
 	"net/http"
 	"strings"
 	"time"
-
-	"github.com/go-sql-driver/mysql"
-	"github.com/gorilla/securecookie"
-	"github.com/gorilla/sessions"
-)
-
-const (
-	timeFormat = "2006-01-02 15:04:05"
 )
 
 type MySQLStore struct {
@@ -275,16 +269,10 @@ func (m *MySQLStore) save(session *sessions.Session) error {
 func (m *MySQLStore) load(session *sessions.Session) error {
 	row := m.stmtSelect.QueryRow(session.ID)
 	sess := sessionRow{}
-	var timeCreated, timeModified, timeExpires driver.Value
-	scanErr := row.Scan(&sess.id, &sess.data, &timeCreated, &timeModified, &timeExpires)
+	scanErr := row.Scan(&sess.id, &sess.data, &sess.createdOn, &sess.modifiedOn, &sess.expiresOn)
 	if scanErr != nil {
 		return scanErr
 	}
-
-	sess.createdOn, _ = time.Parse(timeFormat, string(timeCreated.([]uint8)))
-	sess.modifiedOn, _ = time.Parse(timeFormat, string(timeModified.([]uint8)))
-	sess.expiresOn, _ = time.Parse(timeFormat, string(timeExpires.([]uint8)))
-
 	if sess.expiresOn.Sub(time.Now()) < 0 {
 		log.Printf("Session expired on %s, but it is %s now.", sess.expiresOn, time.Now())
 		return errors.New("Session expired")

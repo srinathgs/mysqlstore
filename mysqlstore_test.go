@@ -8,16 +8,10 @@ package mysqlstore
 
 import (
 	"encoding/gob"
-	"flag"
+	"github.com/gorilla/sessions"
 	"net/http"
 	"net/http/httptest"
 	"testing"
-
-	"github.com/gorilla/sessions"
-)
-
-var (
-	flagDSN = flag.String("dsn", "testdb:testpw@tcp(localhost:3306)/testdb?parseTime=true&loc=Local", "MySQL conenction DSN")
 )
 
 type FlashMessage struct {
@@ -41,10 +35,10 @@ func TestMySQLStore(t *testing.T) {
 
 	// Round 1 ----------------------------------------------------------------
 
-	store, err := NewMySQLStore(*flagDSN,
+	store, err := NewMySQLStore("testuser:testpw@tcp(localhost:3306)/testdb?parseTime=true&loc=Local",
 		"sessionstore", "/", 3600, []byte("secret-key"))
 	if err != nil {
-		t.Fatalf("Error connecting to MySQL: %s", err.Error())
+		t.Fatalf("Error connecting to MySQL: ", err)
 	}
 	defer store.Close()
 
@@ -71,7 +65,7 @@ func TestMySQLStore(t *testing.T) {
 	hdr = rsp.Header()
 	cookies, ok = hdr["Set-Cookie"]
 	if !ok || len(cookies) != 1 {
-		t.Fatalf("No cookies. Header: %v", hdr)
+		t.Fatalf("No cookies. Header:", hdr)
 	}
 
 	// Round 2 ----------------------------------------------------------------
@@ -136,7 +130,7 @@ func TestMySQLStore(t *testing.T) {
 	hdr = rsp.Header()
 	cookies, ok = hdr["Set-Cookie"]
 	if !ok || len(cookies) != 1 {
-		t.Fatalf("No cookies. Header: %v", hdr)
+		t.Fatalf("No cookies. Header:", hdr)
 	}
 
 	// Round 4 ----------------------------------------------------------------
@@ -189,7 +183,7 @@ func TestMySQLStore(t *testing.T) {
 	hdr = rsp.Header()
 	cookies, ok = hdr["Set-Cookie"]
 	if !ok || len(cookies) != 1 {
-		t.Fatalf("No cookies. Header: %v", hdr)
+		t.Fatalf("No cookies. Header:", hdr)
 	}
 
 	// Round 6 ----------------------------------------------------------------
@@ -215,6 +209,5 @@ func TestMySQLStore(t *testing.T) {
 }
 
 func init() {
-	flag.Parse()
 	gob.Register(FlashMessage{})
 }
