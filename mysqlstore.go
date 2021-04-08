@@ -9,12 +9,10 @@ package mysqlstore
 import (
 	"database/sql"
 	"encoding/gob"
-	"errors"
 	"fmt"
 	"github.com/go-sql-driver/mysql"
 	"github.com/gorilla/securecookie"
 	"github.com/gorilla/sessions"
-	"log"
 	"net/http"
 	"strings"
 	"time"
@@ -244,7 +242,6 @@ func (m *MySQLStore) save(session *sessions.Session) error {
 	exOn := session.Values["expires_on"]
 	if exOn == nil {
 		expiresOn = time.Now().Add(time.Second * time.Duration(session.Options.MaxAge))
-		log.Print("nil")
 	} else {
 		expiresOn = exOn.(time.Time)
 		if expiresOn.Sub(time.Now().Add(time.Second*time.Duration(session.Options.MaxAge))) < 0 {
@@ -274,8 +271,7 @@ func (m *MySQLStore) load(session *sessions.Session) error {
 		return scanErr
 	}
 	if sess.expiresOn.Sub(time.Now()) < 0 {
-		log.Printf("Session expired on %s, but it is %s now.", sess.expiresOn, time.Now())
-		return errors.New("Session expired")
+		return fmt.Errorf("Session expired on %s, but it is %s now.", sess.expiresOn, time.Now())
 	}
 	err := securecookie.DecodeMulti(session.Name(), sess.data, &session.Values, m.Codecs...)
 	if err != nil {
