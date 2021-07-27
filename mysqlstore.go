@@ -11,15 +11,16 @@ import (
 	"encoding/gob"
 	"errors"
 	"fmt"
-	"github.com/go-sql-driver/mysql"
-	"github.com/gorilla/securecookie"
-	"github.com/gorilla/sessions"
-	"log"
 	"net/http"
 	"strings"
 	"time"
+
+	"github.com/go-sql-driver/mysql"
+	"github.com/gorilla/securecookie"
+	"github.com/gorilla/sessions"
 )
 
+// implements sessions.Store interface
 type MySQLStore struct {
 	db         *sql.DB
 	stmtInsert *sql.Stmt
@@ -145,10 +146,10 @@ func (m *MySQLStore) New(r *http.Request, name string) (*sessions.Session, error
 	if cook, errCookie := r.Cookie(name); errCookie == nil {
 		err = securecookie.DecodeMulti(name, cook.Value, &session.ID, m.Codecs...)
 		if err == nil {
-			err = m.load(session)
-			if err == nil {
+			if err = m.load(session); err == nil {
 				session.IsNew = false
 			} else {
+				// making error deliberately nil because the error just indicates a new session.
 				err = nil
 			}
 		}
@@ -179,17 +180,16 @@ func (m *MySQLStore) insert(session *sessions.Session) error {
 	var expiresOn time.Time
 	crOn := session.Values["created_on"]
 	if crOn == nil {
-		createdOn = time.Now()
-	} else {
-		createdOn = crOn.(time.Time)
+		crOn = time.Now()
 	}
+	createdOn = crOn.(time.Time)
 	modifiedOn = createdOn
 	exOn := session.Values["expires_on"]
 	if exOn == nil {
-		expiresOn = time.Now().Add(time.Second * time.Duration(session.Options.MaxAge))
-	} else {
-		expiresOn = exOn.(time.Time)
+		exOn = time.Now().Add(time.Second * time.Duration(session.Options.MaxAge))
 	}
+	expiresOn = exOn.(time.Time)
+
 	delete(session.Values, "created_on")
 	delete(session.Values, "expires_on")
 	delete(session.Values, "modified_on")
@@ -220,7 +220,6 @@ func (m *MySQLStore) Delete(r *http.Request, w http.ResponseWriter, session *ses
 	for k := range session.Values {
 		delete(session.Values, k)
 	}
-
 	_, delErr := m.stmtDelete.Exec(session.ID)
 	if delErr != nil {
 		return delErr
@@ -229,7 +228,7 @@ func (m *MySQLStore) Delete(r *http.Request, w http.ResponseWriter, session *ses
 }
 
 func (m *MySQLStore) save(session *sessions.Session) error {
-	if session.IsNew == true {
+	if session.IsNew {
 		return m.insert(session)
 	}
 	var createdOn time.Time
@@ -243,13 +242,11 @@ func (m *MySQLStore) save(session *sessions.Session) error {
 
 	exOn := session.Values["expires_on"]
 	if exOn == nil {
+		exOn = time.Now().Add(time.Second * time.Duration(session.Options.MaxAge))
+	}
+	expiresOn = exOn.(time.Time)
+	if expiresOn.Sub(time.Now().Add(time.Second*time.Duration(session.Options.MaxAge))) < 0 {
 		expiresOn = time.Now().Add(time.Second * time.Duration(session.Options.MaxAge))
-		log.Print("nil")
-	} else {
-		expiresOn = exOn.(time.Time)
-		if expiresOn.Sub(time.Now().Add(time.Second*time.Duration(session.Options.MaxAge))) < 0 {
-			expiresOn = time.Now().Add(time.Second * time.Duration(session.Options.MaxAge))
-		}
 	}
 
 	delete(session.Values, "created_on")
@@ -266,6 +263,7 @@ func (m *MySQLStore) save(session *sessions.Session) error {
 	return nil
 }
 
+// load reads the session from MySQL. It only produces error if the session is expired or doesn't exist.
 func (m *MySQLStore) load(session *sessions.Session) error {
 	row := m.stmtSelect.QueryRow(session.ID)
 	sess := sessionRow{}
@@ -274,7 +272,6 @@ func (m *MySQLStore) load(session *sessions.Session) error {
 		return scanErr
 	}
 	if sess.expiresOn.Sub(time.Now()) < 0 {
-		log.Printf("Session expired on %s, but it is %s now.", sess.expiresOn, time.Now())
 		return errors.New("Session expired")
 	}
 	err := securecookie.DecodeMulti(session.Name(), sess.data, &session.Values, m.Codecs...)
