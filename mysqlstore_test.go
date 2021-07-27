@@ -8,10 +8,11 @@ package mysqlstore
 
 import (
 	"encoding/gob"
-	"github.com/gorilla/sessions"
 	"net/http"
 	"net/http/httptest"
 	"testing"
+
+	"github.com/gorilla/sessions"
 )
 
 type FlashMessage struct {
@@ -34,11 +35,10 @@ func TestMySQLStore(t *testing.T) {
 	// license that can be found in the LICENSE file.
 
 	// Round 1 ----------------------------------------------------------------
-
 	store, err := NewMySQLStore("testuser:testpw@tcp(localhost:3306)/testdb?parseTime=true&loc=Local",
 		"sessionstore", "/", 3600, []byte("secret-key"))
 	if err != nil {
-		t.Fatalf("Error connecting to MySQL: ", err)
+		t.Fatalf("Error connecting to MySQL: %e", err)
 	}
 	defer store.Close()
 
@@ -65,11 +65,10 @@ func TestMySQLStore(t *testing.T) {
 	hdr = rsp.Header()
 	cookies, ok = hdr["Set-Cookie"]
 	if !ok || len(cookies) != 1 {
-		t.Fatalf("No cookies. Header:", hdr)
+		t.Fatalf("No cookies. Header: %v", hdr)
 	}
 
 	// Round 2 ----------------------------------------------------------------
-
 	req, _ = http.NewRequest("GET", "http://localhost:8080/", nil)
 	req.Header.Add("Cookie", cookies[0])
 	rsp = httptest.NewRecorder()
@@ -130,7 +129,7 @@ func TestMySQLStore(t *testing.T) {
 	hdr = rsp.Header()
 	cookies, ok = hdr["Set-Cookie"]
 	if !ok || len(cookies) != 1 {
-		t.Fatalf("No cookies. Header:", hdr)
+		t.Fatalf("No cookies. Header: %v", hdr)
 	}
 
 	// Round 4 ----------------------------------------------------------------
@@ -183,7 +182,7 @@ func TestMySQLStore(t *testing.T) {
 	hdr = rsp.Header()
 	cookies, ok = hdr["Set-Cookie"]
 	if !ok || len(cookies) != 1 {
-		t.Fatalf("No cookies. Header:", hdr)
+		t.Fatalf("No cookies. Header: %v", hdr)
 	}
 
 	// Round 6 ----------------------------------------------------------------
@@ -208,6 +207,6 @@ func TestMySQLStore(t *testing.T) {
 	//}
 }
 
-func init() {
+func TestMain(m *testing.M) {
 	gob.Register(FlashMessage{})
 }
