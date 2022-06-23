@@ -1,4 +1,5 @@
-/* Gorilla Sessions backend for MySQL.
+/*
+	Gorilla Sessions backend for MySQL.
 
 Copyright (c) 2013 Contributors. See the list of contributors in the CONTRIBUTORS file for details.
 
@@ -11,13 +12,14 @@ import (
 	"encoding/gob"
 	"errors"
 	"fmt"
-	"github.com/go-sql-driver/mysql"
-	"github.com/gorilla/securecookie"
-	"github.com/gorilla/sessions"
 	"log"
 	"net/http"
 	"strings"
 	"time"
+
+	"github.com/go-sql-driver/mysql"
+	"github.com/gorilla/securecookie"
+	"github.com/gorilla/sessions"
 )
 
 type MySQLStore struct {
@@ -26,18 +28,17 @@ type MySQLStore struct {
 	stmtDelete *sql.Stmt
 	stmtUpdate *sql.Stmt
 	stmtSelect *sql.Stmt
-
-	Codecs  []securecookie.Codec
-	Options *sessions.Options
-	table   string
+	Options    *sessions.Options
+	table      string
+	Codecs     []securecookie.Codec
 }
 
 type sessionRow struct {
-	id         string
-	data       string
 	createdOn  time.Time
 	modifiedOn time.Time
 	expiresOn  time.Time
+	id         string
+	data       string
 }
 
 func init() {
@@ -211,7 +212,6 @@ func (m *MySQLStore) insert(session *sessions.Session) error {
 }
 
 func (m *MySQLStore) Delete(r *http.Request, w http.ResponseWriter, session *sessions.Session) error {
-
 	// Set cookie to expire.
 	options := *session.Options
 	options.MaxAge = -1
@@ -285,5 +285,4 @@ func (m *MySQLStore) load(session *sessions.Session) error {
 	session.Values["modified_on"] = sess.modifiedOn
 	session.Values["expires_on"] = sess.expiresOn
 	return nil
-
 }
