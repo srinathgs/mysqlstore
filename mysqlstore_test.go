@@ -36,7 +36,7 @@ func TestMySQLStore(t *testing.T) {
 
 	// Round 1 ----------------------------------------------------------------
 
-	store, err := NewMySQLStore("testuser:testpw@tcp(localhost:3306)/testdb?parseTime=true&loc=Local",
+	store, err := NewMySQLStore("root:root@tcp(localhost:3306)/session?parseTime=true&loc=Local",
 		"sessionstore", "/", 3600, []byte("secret-key"))
 	if err != nil {
 		t.Fatalf("Error connecting to MySQL: %v", err)

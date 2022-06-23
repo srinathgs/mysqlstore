@@ -42,7 +42,7 @@ type sessionRow struct {
 }
 
 func init() {
-	gob.Register(time.Time{})
+	gob.Register((*time.Time)(nil))
 }
 
 func NewMySQLStore(endpoint string, tableName string, path string, maxAge int, keyPairs ...[]byte) (*MySQLStore, error) {
