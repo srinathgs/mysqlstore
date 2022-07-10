@@ -1,4 +1,4 @@
-module github.com/srinathgs/mysqlstore
+module github.com/bokunodev/mysqlstore
 
 go 1.19
 
