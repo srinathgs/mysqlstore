@@ -8,15 +8,16 @@ package mysqlstore
 
 import (
 	"encoding/gob"
-	"github.com/gorilla/sessions"
 	"net/http"
 	"net/http/httptest"
 	"testing"
+
+	"github.com/gorilla/sessions"
 )
 
 type FlashMessage struct {
-	Type    int
 	Message string
+	Type    int
 }
 
 func TestMySQLStore(t *testing.T) {
@@ -35,10 +36,10 @@ func TestMySQLStore(t *testing.T) {
 
 	// Round 1 ----------------------------------------------------------------
 
-	store, err := NewMySQLStore("testuser:testpw@tcp(localhost:3306)/testdb?parseTime=true&loc=Local",
+	store, err := NewMySQLStore("root:root@tcp(localhost:3306)/session?parseTime=true&loc=Local",
 		"sessionstore", "/", 3600, []byte("secret-key"))
 	if err != nil {
-		t.Fatalf("Error connecting to MySQL: ", err)
+		t.Fatalf("Error connecting to MySQL: %v", err)
 	}
 	defer store.Close()
 
@@ -65,7 +66,7 @@ func TestMySQLStore(t *testing.T) {
 	hdr = rsp.Header()
 	cookies, ok = hdr["Set-Cookie"]
 	if !ok || len(cookies) != 1 {
-		t.Fatalf("No cookies. Header:", hdr)
+		t.Fatalf("No cookies. Header: %v", hdr)
 	}
 
 	// Round 2 ----------------------------------------------------------------
@@ -122,7 +123,7 @@ func TestMySQLStore(t *testing.T) {
 		t.Errorf("Expected empty flashes; Got %v", flashes)
 	}
 	// Add some flashes.
-	session.AddFlash(&FlashMessage{42, "foo"})
+	session.AddFlash(&FlashMessage{"foo", 42})
 	// Save.
 	if err = sessions.Save(req, rsp); err != nil {
 		t.Fatalf("Error saving session: %v", err)
@@ -130,7 +131,7 @@ func TestMySQLStore(t *testing.T) {
 	hdr = rsp.Header()
 	cookies, ok = hdr["Set-Cookie"]
 	if !ok || len(cookies) != 1 {
-		t.Fatalf("No cookies. Header:", hdr)
+		t.Fatalf("No cookies. Header: %v", hdr)
 	}
 
 	// Round 4 ----------------------------------------------------------------
@@ -150,7 +151,7 @@ func TestMySQLStore(t *testing.T) {
 	}
 	custom := flashes[0].(FlashMessage)
 	if custom.Type != 42 || custom.Message != "foo" {
-		t.Errorf("Expected %#v, got %#v", FlashMessage{42, "foo"}, custom)
+		t.Errorf("Expected %#v, got %#v", FlashMessage{"foo", 42}, custom)
 	}
 
 	// Delete session.
@@ -183,7 +184,7 @@ func TestMySQLStore(t *testing.T) {
 	hdr = rsp.Header()
 	cookies, ok = hdr["Set-Cookie"]
 	if !ok || len(cookies) != 1 {
-		t.Fatalf("No cookies. Header:", hdr)
+		t.Fatalf("No cookies. Header: %v", hdr)
 	}
 
 	// Round 6 ----------------------------------------------------------------
