@@ -1,4 +1,5 @@
-/* Gorilla Sessions backend for MySQL.
+/*
+	Gorilla Sessions backend for MySQL.
 
 Copyright (c) 2013 Contributors. See the list of contributors in the CONTRIBUTORS file for details.
 
@@ -11,13 +12,14 @@ import (
 	"encoding/gob"
 	"errors"
 	"fmt"
-	"github.com/go-sql-driver/mysql"
-	"github.com/gorilla/securecookie"
-	"github.com/gorilla/sessions"
 	"log"
 	"net/http"
 	"strings"
 	"time"
+
+	"github.com/go-sql-driver/mysql"
+	"github.com/gorilla/securecookie"
+	"github.com/gorilla/sessions"
 )
 
 type MySQLStore struct {
@@ -139,6 +141,7 @@ func (m *MySQLStore) New(r *http.Request, name string) (*sessions.Session, error
 		MaxAge:   m.Options.MaxAge,
 		Secure:   m.Options.Secure,
 		HttpOnly: m.Options.HttpOnly,
+		SameSite: m.Options.SameSite,
 	}
 	session.IsNew = true
 	var err error
