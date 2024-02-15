@@ -151,8 +151,6 @@ func (m *MySQLStore) New(r *http.Request, name string) (*sessions.Session, error
 			err = m.load(session)
 			if err == nil {
 				session.IsNew = false
-			} else {
-				err = nil
 			}
 		}
 	}
